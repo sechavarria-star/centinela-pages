@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Centinela</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛰️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  body, h1, h2, h3, p, ol, ul, pre, figure { margin: 0; }
+  ul { padding: 0; list-style: none; }
+
+  :root {
+    --ground:   #F4F6F8;
+    --surface:  #FFFFFF;
+    --sunken:   #EDF0F4;
+    --line:     #D8DEE7;
+    --line-soft:#E6EAF0;
+    --ink:      #151A22;
+    --ink-2:    #3D4653;
+    --muted:    #626C7B;
+    --accent:   #0E6E76;
+    --accent-2: #0A5057;
+    --ok:       #1B7A46;
+    --warn:     #9A5B00;
+    --down:     #AF2417;
+    --ok-bg:    #E4F2EA;
+    --warn-bg:  #F8EEDC;
+    --down-bg:  #F8E6E3;
+    --shadow:   0 1px 2px rgba(21,26,34,.05), 0 8px 24px -12px rgba(21,26,34,.18);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#10141A; --surface:#171C25; --sunken:#1E242F; --line:#2C3542; --line-soft:#232B36;
+      --ink:#E9EDF3; --ink-2:#C0C8D4; --muted:#8E99A9; --accent:#4FB8C0; --accent-2:#7ED3D9;
+      --ok:#58C68D; --warn:#E0A44A; --down:#F2867A;
+      --ok-bg:#163024; --warn-bg:#33270F; --down-bg:#38201D;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#10141A; --surface:#171C25; --sunken:#1E242F; --line:#2C3542; --line-soft:#232B36;
+    --ink:#E9EDF3; --ink-2:#C0C8D4; --muted:#8E99A9; --accent:#4FB8C0; --accent-2:#7ED3D9;
+    --ok:#58C68D; --warn:#E0A44A; --down:#F2867A;
+    --ok-bg:#163024; --warn-bg:#33270F; --down-bg:#38201D;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.6);
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    font-size: 16px; line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  [hidden] { display: none !important; }
+
+  .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+  .num  { font-variant-numeric: tabular-nums; }
+
+  /* ---------- login ---------- */
+  #login {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 2rem 1.5rem;
+  }
+  .card-login {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: 2.5rem 2.25rem;
+    max-width: 25rem;
+    width: 100%;
+    display: flex; flex-direction: column; gap: 1.1rem;
+    text-align: center;
+  }
+  .card-login .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .7rem; letter-spacing: .13em; text-transform: uppercase;
+    color: var(--accent); font-weight: 500;
+  }
+  .card-login h1 { font-size: 2.1rem; font-weight: 600; letter-spacing: -.03em; }
+  .card-login p { color: var(--muted); font-size: .92rem; }
+  .gbtn-wrap { display: flex; justify-content: center; min-height: 44px; }
+  .aviso {
+    font-size: .85rem; padding: .6rem .8rem; border-radius: 8px;
+    background: var(--down-bg); color: var(--down); border: 1px solid var(--line);
+  }
+
+  /* ---------- app ---------- */
+  .wrap { max-width: 76rem; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
+
+  .topbar {
+    display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap;
+    padding-bottom: 1.1rem; border-bottom: 1px solid var(--line); margin-bottom: 1.5rem;
+  }
+  .topbar h1 { font-size: 1.6rem; font-weight: 600; letter-spacing: -.03em; }
+  .topbar .who { margin-left: auto; color: var(--muted); font-size: .84rem; display: flex; align-items: center; gap: .8rem; }
+  .linkbtn {
+    background: none; border: none; padding: 0; cursor: pointer;
+    color: var(--accent); font: inherit; font-size: .84rem;
+    text-decoration: underline; text-underline-offset: 2px;
+  }
+
+  .tabs { display: flex; gap: .3rem; margin-bottom: 1.75rem; }
+  .tab {
+    background: none; border: 1px solid transparent; cursor: pointer;
+    font: inherit; font-size: .9rem; font-weight: 500; color: var(--muted);
+    padding: .45rem .9rem; border-radius: 8px;
+  }
+  .tab[aria-selected="true"] { background: var(--surface); border-color: var(--line); color: var(--ink); }
+  .tab:hover { color: var(--ink); }
+
+  /* stat tiles */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: .75rem; margin-bottom: 1.75rem; }
+  .stat {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 11px;
+    padding: .95rem 1.1rem; display: flex; flex-direction: column; gap: .15rem;
+    border-top: 3px solid var(--line);
+  }
+  .stat.is-ok   { border-top-color: var(--ok); }
+  .stat.is-down { border-top-color: var(--down); }
+  .stat.is-unk  { border-top-color: var(--warn); }
+  .stat .v { font-size: 1.85rem; font-weight: 600; letter-spacing: -.03em; line-height: 1.1; }
+  .stat .k {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+  }
+
+  /* table */
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 11px; overflow: hidden; }
+  .panel > h2 {
+    font-size: .95rem; font-weight: 600; padding: .9rem 1.1rem;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: .89rem; }
+  th, td { text-align: left; padding: .65rem .9rem; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+  thead th {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .68rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); background: var(--sunken); white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.svc { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .82rem; }
+  td.det { color: var(--muted); font-size: .84rem; }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: .38rem;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .68rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
+    padding: .2rem .5rem .2rem .42rem; border-radius: 5px; white-space: nowrap;
+  }
+  .pill::before { content: ""; width: .45rem; height: .45rem; border-radius: 50%; background: currentColor; flex: none; }
+  .pill.ok   { background: var(--ok-bg);   color: var(--ok); }
+  .pill.down { background: var(--down-bg); color: var(--down); }
+  .pill.unk  { background: var(--warn-bg); color: var(--warn); }
+  .pill.off  { background: var(--sunken);  color: var(--muted); }
+
+  .tipo {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .72rem; color: var(--muted);
+    border: 1px solid var(--line); border-radius: 4px; padding: .1rem .35rem;
+  }
+
+  .vacio { padding: 2.5rem 1.1rem; text-align: center; color: var(--muted); font-size: .9rem; }
+
+  /* eventos */
+  .ev { display: flex; gap: .75rem; padding: .6rem 1.1rem; border-bottom: 1px solid var(--line-soft); align-items: baseline; font-size: .86rem; }
+  .ev:last-child { border-bottom: none; }
+  .ev .cuando { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .74rem; color: var(--muted); white-space: nowrap; }
+  .ev .qué { color: var(--ink-2); }
+  .ev .svc { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .8rem; color: var(--ink); }
+
+  /* runbook */
+  .doc { display: flex; flex-direction: column; gap: 2.25rem; max-width: 54rem; }
+  .doc section { display: flex; flex-direction: column; gap: 1rem; }
+  .doc h2 { font-size: 1.25rem; font-weight: 600; letter-spacing: -.02em; padding-bottom: .8rem; border-bottom: 1px solid var(--line); }
+  .doc h3 { font-size: .98rem; font-weight: 600; }
+  .doc p { color: var(--ink-2); max-width: 66ch; }
+  .doc strong { color: var(--ink); font-weight: 600; }
+  .doc code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .85em;
+    background: var(--sunken); padding: .1rem .35rem; border-radius: 4px; color: var(--accent-2);
+  }
+  .modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; }
+  .mode { background: var(--surface); border: 1px solid var(--line); border-radius: 11px; padding: 1.1rem 1.15rem; display: flex; flex-direction: column; gap: .55rem; }
+  .mode .tag {
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .67rem; font-weight: 600;
+    letter-spacing: .08em; text-transform: uppercase; padding: .2rem .5rem; border-radius: 5px; align-self: flex-start;
+  }
+  .mode.a .tag { background: var(--down-bg); color: var(--down); }
+  .mode.b .tag { background: var(--warn-bg); color: var(--warn); }
+  .mode.c .tag { background: var(--ok-bg);   color: var(--ok); }
+  .mode p { font-size: .88rem; }
+  pre {
+    background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--accent);
+    border-radius: 8px; padding: .9rem 1.05rem; overflow-x: auto;
+  }
+  pre code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .81rem;
+    line-height: 1.65; color: var(--ink); background: none; padding: 0; white-space: pre;
+  }
+  .cap {
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .72rem;
+    letter-spacing: .07em; text-transform: uppercase; color: var(--muted); margin-bottom: .45rem;
+  }
+  .doc ul.bul { padding-left: 1.1rem; list-style: disc; display: flex; flex-direction: column; gap: .4rem; }
+  .doc ul.bul li { color: var(--ink-2); font-size: .92rem; }
+
+  button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="login">
+  <div class="card-login">
+    <div class="eyebrow">Infraestructura GIWA</div>
+    <h1>Centinela</h1>
+    <p>Estado de los flujos de n8n. Acceso solo con cuenta <strong>@giwa-ia.com</strong>.</p>
+    <div class="gbtn-wrap"><div id="gbtn"></div></div>
+    <div id="loginError" class="aviso" hidden></div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app" hidden>
+  <div class="wrap">
+
+    <div class="topbar">
+      <h1>Centinela</h1>
+      <span class="mono" style="font-size:.75rem;color:var(--muted)" id="sello"></span>
+      <div class="who">
+        <span id="usuario"></span>
+        <button class="linkbtn" id="btnRefrescar" type="button">Actualizar</button>
+        <button class="linkbtn" id="btnSalir" type="button">Salir</button>
+      </div>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button class="tab" id="tabEstado"  role="tab" aria-selected="true"  type="button">Estado</button>
+      <button class="tab" id="tabRunbook" role="tab" aria-selected="false" type="button">Runbook</button>
+    </div>
+
+    <!-- ---- vista estado ---- -->
+    <div id="vistaEstado">
+      <div class="stats" id="stats"></div>
+
+      <div class="panel" style="margin-bottom:1.5rem">
+        <h2>Servicios</h2>
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Estado</th><th>Cliente</th><th>Servicio</th><th>Tipo</th>
+                <th>Detalle</th><th>Último chequeo</th>
+              </tr>
+            </thead>
+            <tbody id="filas"></tbody>
+          </table>
+        </div>
+        <div class="vacio" id="sinServicios" hidden>Todavía no hay servicios registrados.</div>
+      </div>
+
+      <div class="panel">
+        <h2>Últimos cambios de estado</h2>
+        <div id="eventos"></div>
+        <div class="vacio" id="sinEventos" hidden>Sin cambios registrados.</div>
+      </div>
+    </div>
+
+    <!-- ---- vista runbook ---- -->
+    <div id="vistaRunbook" class="doc" hidden>
+
+      <section>
+        <h2>Tres formas de romperse</h2>
+        <p>Cada una es invisible para las otras dos. Un flujo que dejó de correr no genera errores, y un webhook huérfano responde que todo está bien.</p>
+        <div class="modes">
+          <div class="mode a">
+            <span class="tag">Explotó</span>
+            <h3>Corrió y falló</h3>
+            <p>Una ejecución termina en error: se cayó una API, cambió un schema, el modelo devolvió algo raro.</p>
+          </div>
+          <div class="mode b">
+            <span class="tag">Mudo</span>
+            <h3>Vivo pero no responde</h3>
+            <p>El webhook quedó huérfano, Telegram dejó de entregar, venció el token de Meta. Nada falla porque nada llega.</p>
+          </div>
+          <div class="mode c">
+            <span class="tag">Silencio</span>
+            <h3>Dejó de correr</h3>
+            <p>El schedule se desactivó o alguien despublicó el flujo. Cero ejecuciones, cero errores, cero señales.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Dar de alta un servicio</h2>
+        <p>Siempre una fila en <code>giwa.sla_servicios</code>. Según qué dispara el flujo, cambia lo que hay que agregarle:</p>
+        <ul class="bul">
+          <li><strong>Con webhook propio</strong> — 2 nodos (Webhook <code>GET /x-health</code> + Respond), <strong>adentro del mismo workflow</strong>. En otro workflow respondería 200 aunque el agente esté muerto.</li>
+          <li><strong>Telegram o Meta</strong> — nada en el flujo, solo el token en la fila.</li>
+          <li><strong>Con schedule</strong> — 1 nodo Execute Sub-workflow (Latido) al final del camino feliz, así prueba que terminó y no solo que arrancó.</li>
+          <li><strong>Panel estático</strong> — nada.</li>
+        </ul>
+
+        <div>
+          <div class="cap">ping · un endpoint que tiene que devolver 200</div>
+<pre><code>insert into giwa.sla_servicios (servicio, cliente, tipo, url)
+values ('mi-servicio', '&lt;cliente&gt;', 'ping', '&lt;url del health&gt;');</code></pre>
+        </div>
+
+        <div>
+          <div class="cap">telegram · chequea getWebhookInfo contra la API de Telegram</div>
+<pre><code>insert into giwa.sla_servicios (servicio, cliente, tipo, secreto)
+values ('mi-bot', '&lt;cliente&gt;', 'telegram', '&lt;bot token&gt;');</code></pre>
+        </div>
+
+        <div>
+          <div class="cap">meta · valida que el token viva y la app siga suscrita</div>
+<pre><code>insert into giwa.sla_servicios (servicio, cliente, tipo, url, secreto)
+values ('mi-whatsapp', '&lt;cliente&gt;', 'meta',
+        'https://graph.facebook.com/v23.0/&lt;WABA_ID&gt;/subscribed_apps',
+        '&lt;access token&gt;');</code></pre>
+        </div>
+
+        <div>
+          <div class="cap">latido · avisa si no hay señales en intervalo + tolerancia</div>
+<pre><code>insert into giwa.sla_servicios
+  (servicio, cliente, tipo, intervalo_min, tolerancia_min)
+values ('mi-schedule', '&lt;cliente&gt;', 'latido', 60, 20);</code></pre>
+        </div>
+      </section>
+
+      <section>
+        <h2>Operarlo</h2>
+        <div>
+          <div class="cap">silenciar durante un mantenimiento</div>
+<pre><code>update giwa.sla_servicios set activo = false
+where servicio = 'mi-servicio';</code></pre>
+        </div>
+        <p>Las alertas están calibradas para seguir siendo legibles con decenas de servicios: avisan <strong>solo cuando cambia el estado</strong>, exigen <strong>dos fallos seguidos</strong> antes de declarar una caída, mandan <strong>un mensaje con todo lo caído</strong> en vez de uno por servicio, recuerdan cada hora mientras siga roto y avisan <strong>cuando se recupera</strong>.</p>
+        <p>Una ejecución cada 5 minutos cubre todos los servicios: 288 por día, contra las más de 10.000 que serían chequeos individuales por flujo.</p>
+      </section>
+
+      <section>
+        <h2>Ojo con los tokens</h2>
+        <p>Los tokens de bot viven en la columna <code>secreto</code>. Esa tabla no puede quedar expuesta por el webhook de ningún panel de cliente: este panel lee de <code>sla_estado</code> y <code>sla_eventos</code>, nunca de <code>sla_servicios.secreto</code>.</p>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+(function () {
+  "use strict";
+
+  var CONFIG = {
+    API: "https://giwa-ia.app.n8n.cloud/webhook/centinela-api",
+    CLIENT_ID: "527644613244-0j1ob25124fcs5tfr5omm8f1tfptc2a1.apps.googleusercontent.com",
+    DOMINIO: "giwa-ia.com",
+    REFRESCO_MS: 60000
+  };
+
+  var token = null;
+  var timer = null;
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  // ---------- login ----------
+  window.onGoogleLibraryLoad = function () {
+    google.accounts.id.initialize({
+      client_id: CONFIG.CLIENT_ID,
+      callback: onCredential,
+      hd: CONFIG.DOMINIO,
+      auto_select: false
+    });
+    google.accounts.id.renderButton($("gbtn"), {
+      type: "standard", size: "large", theme: "filled_black",
+      text: "signin_with", shape: "rectangular", locale: "es"
+    });
+  };
+
+  function onCredential(resp) {
+    token = resp && resp.credential;
+    if (!token) { mostrarErrorLogin("No llegó el token de Google."); return; }
+    cargar(true);
+  }
+
+  function mostrarErrorLogin(msg) {
+    var e = $("loginError");
+    e.textContent = msg;
+    e.hidden = false;
+  }
+
+  function salir() {
+    token = null;
+    if (timer) { clearInterval(timer); timer = null; }
+    $("app").hidden = true;
+    $("login").hidden = false;
+    if (window.google && google.accounts && google.accounts.id) {
+      google.accounts.id.disableAutoSelect();
+    }
+  }
+
+  // ---------- datos ----------
+  function cargar(primera) {
+    if (!token) return;
+    fetch(CONFIG.API, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=UTF-8" },
+      body: JSON.stringify({ token: token })
+    })
+    .then(function (r) {
+      return r.json().then(function (d) { return { status: r.status, data: d }; });
+    })
+    .then(function (res) {
+      if (res.status === 401) {
+        salir();
+        mostrarErrorLogin(res.data && res.data.motivo ? res.data.motivo : "Sesión vencida. Entrá de nuevo.");
+        return;
+      }
+      if (!res.data || res.data.ok !== true) {
+        if (primera) { mostrarErrorLogin("La API no devolvió datos."); }
+        return;
+      }
+      pintar(res.data);
+      if (primera) {
+        $("login").hidden = true;
+        $("app").hidden = false;
+        if (!timer) { timer = setInterval(function () { cargar(false); }, CONFIG.REFRESCO_MS); }
+      }
+    })
+    .catch(function (err) {
+      if (primera) { mostrarErrorLogin("No se pudo contactar la API: " + err.message); }
+    });
+  }
+
+  // ---------- pintar ----------
+  function pintar(d) {
+    $("usuario").textContent = d.usuario || "";
+    $("sello").textContent = "actualizado " + hora(new Date().toISOString());
+
+    var r = d.resumen || {};
+    $("stats").innerHTML =
+      tile(r.total || 0, "servicios", "") +
+      tile(r.ok || 0, "en pie", "is-ok") +
+      tile(r.falla || 0, "caídos", "is-down") +
+      tile(r.desconocido || 0, "sin datos", "is-unk") +
+      tile(r.pausados || 0, "pausados", "");
+
+    var servicios = d.servicios || [];
+    var tb = $("filas");
+    tb.innerHTML = "";
+    $("sinServicios").hidden = servicios.length > 0;
+
+    servicios.forEach(function (s) {
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        "<td>" + pill(s) + "</td>" +
+        "<td>" + esc(s.cliente) + "</td>" +
+        "<td class='svc'>" + esc(s.servicio) + "</td>" +
+        "<td><span class='tipo'>" + esc(s.tipo) + "</span></td>" +
+        "<td class='det'>" + esc(s.ultimo_detalle || "—") + "</td>" +
+        "<td class='det mono num' style='white-space:nowrap'>" + hora(s.ultimo_chequeo) + "</td>";
+      tb.appendChild(tr);
+    });
+
+    var eventos = d.eventos || [];
+    var cont = $("eventos");
+    cont.innerHTML = "";
+    $("sinEventos").hidden = eventos.length > 0;
+
+    eventos.slice(0, 25).forEach(function (e) {
+      var div = document.createElement("div");
+      div.className = "ev";
+      var cls = e.estado === "OK" ? "ok" : (e.estado === "FALLA" ? "down" : "unk");
+      div.innerHTML =
+        "<span class='cuando'>" + hora(e.creado_en) + "</span>" +
+        "<span class='pill " + cls + "'>" + esc(e.estado) + "</span>" +
+        "<span class='svc'>" + esc(e.servicio) + "</span>" +
+        "<span class='qué'>" + esc(e.detalle || "") + "</span>";
+      cont.appendChild(div);
+    });
+  }
+
+  function tile(v, k, cls) {
+    return "<div class='stat " + cls + "'><span class='v num'>" + v + "</span><span class='k'>" + k + "</span></div>";
+  }
+
+  function pill(s) {
+    if (s.activo === false) { return "<span class='pill off'>pausado</span>"; }
+    if (s.estado === "OK")    { return "<span class='pill ok'>en pie</span>"; }
+    if (s.estado === "FALLA") { return "<span class='pill down'>caído</span>"; }
+    return "<span class='pill unk'>sin datos</span>";
+  }
+
+  function hora(iso) {
+    if (!iso) { return "—"; }
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) { return "—"; }
+    return d.toLocaleString("es-AR", {
+      timeZone: "America/Argentina/Buenos_Aires",
+      day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false
+    });
+  }
+
+  function esc(v) {
+    return String(v === null || v === undefined ? "" : v)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  // ---------- tabs ----------
+  function verTab(cual) {
+    var esEstado = cual === "estado";
+    $("tabEstado").setAttribute("aria-selected", esEstado ? "true" : "false");
+    $("tabRunbook").setAttribute("aria-selected", esEstado ? "false" : "true");
+    $("vistaEstado").hidden = !esEstado;
+    $("vistaRunbook").hidden = esEstado;
+  }
+
+  $("tabEstado").addEventListener("click", function () { verTab("estado"); });
+  $("tabRunbook").addEventListener("click", function () { verTab("runbook"); });
+  $("btnRefrescar").addEventListener("click", function () { cargar(false); });
+  $("btnSalir").addEventListener("click", salir);
+})();
+</script>
+</body>
+</html>
