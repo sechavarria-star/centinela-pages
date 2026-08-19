@@ -2,7 +2,7 @@
 
 Front del panel **Centinela** — estado en vivo de los flujos n8n de GIWA.
 
-`https://appcentinela.giwa-ia.com`
+`https://uptime.giwa-ia.com`
 
 ## Por qué este repo es público y no filtra nada
 
