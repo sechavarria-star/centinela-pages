@@ -454,7 +454,7 @@ where servicio = 'mi-servicio';</code></pre>
     var r = d.resumen || {};
     $("stats").innerHTML =
       tile(r.total || 0, "servicios", "") +
-      tile(r.ok || 0, "en pie", "is-ok") +
+      tile(r.ok || 0, "Online", "is-ok") +
       tile(r.falla || 0, "caídos", "is-down") +
       tile(r.desconocido || 0, "sin datos", "is-unk") +
       tile(r.pausados || 0, "pausados", "");
@@ -500,7 +500,7 @@ where servicio = 'mi-servicio';</code></pre>
 
   function pill(s) {
     if (s.activo === false) { return "<span class='pill off'>pausado</span>"; }
-    if (s.estado === "OK")    { return "<span class='pill ok'>en pie</span>"; }
+    if (s.estado === "OK")    { return "<span class='pill ok'>Online</span>"; }
     if (s.estado === "FALLA") { return "<span class='pill down'>caído</span>"; }
     return "<span class='pill unk'>sin datos</span>";
   }

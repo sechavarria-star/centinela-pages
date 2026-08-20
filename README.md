@@ -24,7 +24,7 @@ No hay clave compartida. El `id_token` vive ~1h, se guarda solo en memoria (no `
 
 ## API
 
-Workflow n8n `GIWA - Centinela API` (`V9zTRv138RL7IYQX`), webhook `POST /webhook/centinela-api`.
+Workflow n8n `GIWA - Uptime API` (`V9zTRv138RL7IYQX`), webhook `POST /webhook/centinela-api`.
 
 Se llama con `Content-Type: text/plain` a propósito: así es un *simple request* y no dispara preflight CORS.
 
@@ -52,4 +52,4 @@ El subdominio nuevo hay que agregarlo a **Orígenes de JavaScript autorizados** 
 ## Relacionado
 
 - `centinela` (privado) — runbook con datos reales y `schema.sql`
-- Workflows: Centinela (triggers), Centinela (errores), Avisar, Latido
+- Workflows: Uptime (triggers), Uptime (errores), Avisar, Latido
