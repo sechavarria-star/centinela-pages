@@ -177,6 +177,44 @@
     border: 1px solid var(--line); border-radius: 4px; padding: .1rem .35rem;
   }
 
+  /* columna Token: oculto por defecto, se revela de a uno */
+  .key { display: flex; align-items: center; gap: .3rem; }
+  .kb {
+    display: inline-flex; align-items: center; gap: .3rem;
+    font: inherit; font-size: .78rem; line-height: 1;
+    color: var(--muted); background: var(--sunken);
+    border: 1px solid var(--line); border-radius: 6px;
+    padding: .28rem .45rem; cursor: pointer; white-space: nowrap;
+  }
+  .kb:hover { color: var(--accent); border-color: var(--accent); }
+  .kb:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .kb[disabled] { cursor: default; opacity: .6; }
+  .kb.ico { padding: .28rem; }
+  .kb.hecho { color: var(--ok); border-color: var(--ok); }
+  .keyval {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .76rem; color: var(--ink);
+    background: var(--sunken); border: 1px solid var(--line); border-radius: 6px;
+    padding: .24rem .4rem;
+    /* un token de Telegram entra entero; los de Meta son larguisimos y se
+       cortan, para eso esta el boton de copiar (y el title al pasar el mouse) */
+    max-width: 20rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    user-select: all;
+  }
+  .keyerr { font-size: .76rem; color: var(--down); }
+
+  /* input con el ojo adentro, en el alta */
+  .conojo { position: relative; display: flex; }
+  .conojo input { padding-right: 2.4rem; }
+  .conojo .ojo {
+    position: absolute; right: .3rem; top: 50%; transform: translateY(-50%);
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 1.9rem; height: 1.9rem;
+    color: var(--muted); background: none; border: 0; border-radius: 6px; cursor: pointer;
+  }
+  .conojo .ojo:hover { color: var(--accent); }
+  .conojo .ojo:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
   .vacio { padding: 2.5rem 1.1rem; text-align: center; color: var(--muted); font-size: .9rem; }
 
   /* formulario de alta */
@@ -303,7 +341,7 @@
             <thead>
               <tr>
                 <th>Estado</th><th>Cliente</th><th>Servicio</th><th>Tipo</th>
-                <th>Detalle</th><th>Último chequeo</th>
+                <th>Token</th><th>Detalle</th><th>Último chequeo</th>
               </tr>
             </thead>
             <tbody id="filas"></tbody>
@@ -356,8 +394,11 @@
 
           <label class="campo" data-para="telegram meta">
             <span class="lab">Token</span>
-            <input name="secreto" type="password" autocomplete="new-password" placeholder="••••••••">
-            <span class="ayuda">Queda guardado en la base y nunca vuelve al navegador.</span>
+            <div class="conojo">
+              <input name="secreto" type="password" autocomplete="new-password" placeholder="••••••••">
+              <button type="button" class="ojo" id="ojoAlta" title="Ver el token" aria-label="Ver el token"></button>
+            </div>
+            <span class="ayuda">Queda guardado en la base. Después lo mirás y lo copiás desde la columna Token de la lista.</span>
           </label>
 
           <div class="fila2" data-para="latido">
@@ -375,7 +416,7 @@
 
           <label class="campo">
             <span class="lab">ID del workflow <span class="opt">opcional</span></span>
-            <input name="workflow_id" type="text" pattern="[A-Za-z0-9]{1,32}" placeholder="pGW6Dbv1Ght6KvbU">
+            <input name="workflow_id" type="text" pattern="[A-Za-z0-9]{1,32}" placeholder="a1B2c3D4e5F6g7H8">
             <span class="ayuda">Sale de la URL en n8n, después de <code>/workflow/</code>. Es lo que hace que el nombre linkee al flujo.</span>
           </label>
 
@@ -448,7 +489,13 @@ where servicio = 'mi-servicio';</code></pre>
 
       <section>
         <h2>Ojo con los tokens</h2>
-        <p>Los tokens de bot viven en la columna <code>secreto</code>. Esa tabla no puede quedar expuesta por el webhook de ningún panel de cliente: este panel lee de <code>sla_estado</code> y <code>sla_eventos</code>, nunca de <code>sla_servicios.secreto</code>.</p>
+        <p>Los tokens de bot viven en la columna <code>secreto</code>, y este panel es la fuente de registro: la columna <strong>Token</strong> los muestra y los copia. Por eso importa cómo está hecho:</p>
+        <ul class="bul">
+          <li><strong>No viajan en el listado.</strong> El listado se refresca solo cada 60 segundos; si los tokens fueran en ese payload quedarían dando vueltas todo el tiempo en memoria del navegador y en el historial de red. Se piden <strong>de a uno</strong>, recién al clickear el ojo.</li>
+          <li><strong>Se ocultan solos a los 2 minutos</strong>, y al cerrar sesión no queda ninguno en memoria.</li>
+          <li><strong>Detrás del mismo login.</strong> Pedir un token exige la misma cuenta <code>@giwa-ia.com</code> validada contra Google; sin eso devuelve 401 sin tocar la base.</li>
+        </ul>
+        <p>Lo que sigue valiendo: <strong>ningún panel de cliente</strong> puede leer de <code>sla_servicios</code>. Un status page abierto tiene que leer de <code>sla_estado</code> y <code>sla_eventos</code>, nunca de acá.</p>
       </section>
 
     </div>
@@ -503,6 +550,10 @@ where servicio = 'mi-servicio';</code></pre>
   function salir() {
     token = null;
     if (timer) { clearInterval(timer); timer = null; }
+    // Al salir no queda ningun token en memoria ni a la vista.
+    for (var s in relojes) { clearTimeout(relojes[s]); }
+    relojes = {};
+    revelados = {};
     $("app").hidden = true;
     $("login").hidden = false;
     if (window.google && google.accounts && google.accounts.id) {
@@ -568,6 +619,7 @@ where servicio = 'mi-servicio';</code></pre>
         "<td>" + esc(s.cliente) + "</td>" +
         "<td class='svc'>" + linkFlujo(s) + "</td>" +
         "<td><span class='tipo'>" + esc(s.tipo) + "</span></td>" +
+        "<td>" + celdaKey(s) + "</td>" +
         "<td class='det'>" + esc(s.ultimo_detalle || "—") + "</td>" +
         "<td class='det mono num' style='white-space:nowrap'>" + hora(s.ultimo_chequeo) + "</td>";
       tb.appendChild(tr);
@@ -632,6 +684,124 @@ where servicio = 'mi-servicio';</code></pre>
   function esc(v) {
     return String(v === null || v === undefined ? "" : v)
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  // ---------- tokens ----------
+  // El token NO viaja en el listado: ese se refresca solo cada 60s y dejaria
+  // todos los secretos dando vueltas en memoria del navegador y en el historial
+  // de red. Se piden de a uno, recien cuando alguien clickea el ojo.
+  //
+  // Los revelados se guardan aca para que el refresco automatico no los borre
+  // justo cuando los estas copiando, y se ocultan solos a los 2 minutos.
+  var revelados = {};
+  var relojes = {};
+  var AUTO_OCULTAR_MS = 120000;
+
+  var ICO = {
+    ojo:    "<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/><circle cx='12' cy='12' r='3'/></svg>",
+    ojoNo:  "<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M17.9 17.9A10.7 10.7 0 0 1 12 20c-7 0-11-8-11-8a19.5 19.5 0 0 1 5.1-6M9.9 4.2A10.9 10.9 0 0 1 12 4c7 0 11 8 11 8a19.4 19.4 0 0 1-2.2 3.2M9.9 9.9a3 3 0 1 0 4.2 4.2'/><path d='M1 1l22 22'/></svg>",
+    copiar: "<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='9' y='9' width='13' height='13' rx='2'/><path d='M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'/></svg>",
+    listo:  "<svg viewBox='0 0 24 24' width='15' height='15' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M20 6L9 17l-5-5'/></svg>"
+  };
+
+  function celdaKey(s) {
+    if (!s.tiene_secreto) { return "<span class='det'>—</span>"; }
+    var v = revelados[s.servicio];
+    return "<div class='key' data-svc='" + esc(s.servicio) + "'>" +
+           (v ? htmlVisible(v) : htmlOculto()) + "</div>";
+  }
+
+  function htmlOculto() {
+    return "<button type='button' class='kb ver' title='Ver el token'>" + ICO.ojo + "Ver</button>";
+  }
+
+  function htmlVisible(v) {
+    return "<code class='keyval' title='" + esc(v) + "'>" + esc(v) + "</code>" +
+           "<button type='button' class='kb ico copiar' title='Copiar'>" + ICO.copiar + "</button>" +
+           "<button type='button' class='kb ico ocultar' title='Ocultar'>" + ICO.ojoNo + "</button>";
+  }
+
+  function cajaDe(svc) {
+    var cajas = document.querySelectorAll(".key");
+    for (var i = 0; i < cajas.length; i++) {
+      if (cajas[i].getAttribute("data-svc") === svc) { return cajas[i]; }
+    }
+    return null;
+  }
+
+  function ocultarKey(svc) {
+    delete revelados[svc];
+    if (relojes[svc]) { clearTimeout(relojes[svc]); delete relojes[svc]; }
+    var caja = cajaDe(svc);
+    if (caja) { caja.innerHTML = htmlOculto(); }
+  }
+
+  function verKey(caja, svc, btn) {
+    btn.disabled = true;
+    btn.innerHTML = ICO.ojo + "…";
+    fetch(CONFIG.API, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=UTF-8" },
+      body: JSON.stringify({ token: token, accion: "secreto", servicio: svc })
+    })
+    .then(function (r) { return r.json().then(function (d) { return { status: r.status, data: d }; }); })
+    .then(function (res) {
+      if (res.status === 401) { salir(); mostrarErrorLogin("Sesión vencida. Entrá de nuevo."); return; }
+      if (!res.data || res.data.ok !== true) {
+        caja.innerHTML = "<span class='keyerr'>" +
+          esc((res.data && res.data.error) || "no se pudo leer") + "</span>" + htmlOculto();
+        return;
+      }
+      revelados[svc] = res.data.secreto;
+      if (relojes[svc]) { clearTimeout(relojes[svc]); }
+      // Se esconde solo: un token a la vista en una pantalla compartida es
+      // justo lo que no queremos.
+      relojes[svc] = setTimeout(function () { ocultarKey(svc); }, AUTO_OCULTAR_MS);
+      caja.innerHTML = htmlVisible(res.data.secreto);
+    })
+    .catch(function (err) {
+      caja.innerHTML = "<span class='keyerr'>" + esc(err.message) + "</span>" + htmlOculto();
+    });
+  }
+
+  function copiar(txt, btn) {
+    function listo() {
+      var antes = btn.innerHTML;
+      btn.innerHTML = ICO.listo;
+      btn.classList.add("hecho");
+      setTimeout(function () { btn.innerHTML = antes; btn.classList.remove("hecho"); }, 1200);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(listo, function () { copiarViejo(txt, listo); });
+    } else {
+      copiarViejo(txt, listo);
+    }
+  }
+
+  // Fallback para navegadores o contextos sin Clipboard API.
+  function copiarViejo(txt, listo) {
+    var ta = document.createElement("textarea");
+    ta.value = txt;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.top = "-1000px";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); listo(); } catch (e) { /* no se pudo */ }
+    document.body.removeChild(ta);
+  }
+
+  // Delegado: la tabla se repinta entera cada 60s, asi que no sirve
+  // enganchar listeners a cada boton.
+  function alClickTabla(ev) {
+    var btn = ev.target.closest ? ev.target.closest("button.kb") : null;
+    if (!btn) { return; }
+    var caja = btn.closest(".key");
+    if (!caja) { return; }
+    var svc = caja.getAttribute("data-svc");
+    if (btn.classList.contains("ver"))          { verKey(caja, svc, btn); }
+    else if (btn.classList.contains("ocultar")) { ocultarKey(svc); }
+    else if (btn.classList.contains("copiar"))  { copiar(revelados[svc] || "", btn); }
   }
 
   // ---------- alta ----------
@@ -719,6 +889,15 @@ where servicio = 'mi-servicio';</code></pre>
   $("altaTipo").addEventListener("change", ajustarCampos);
   $("formAlta").addEventListener("submit", enviarAlta);
   ajustarCampos();
+  $("filas").addEventListener("click", alClickTabla);
+  $("ojoAlta").addEventListener("click", function () {
+    var i = document.querySelector("#formAlta input[name='secreto']");
+    var verlo = i.type === "password";
+    i.type = verlo ? "text" : "password";
+    this.innerHTML = verlo ? ICO.ojoNo : ICO.ojo;
+    this.title = verlo ? "Ocultar el token" : "Ver el token";
+  });
+  $("ojoAlta").innerHTML = ICO.ojo;
   $("btnRefrescar").addEventListener("click", function () { cargar(false); });
   $("btnSalir").addEventListener("click", salir);
 })();
