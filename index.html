@@ -253,6 +253,7 @@
   }
   .doc ul.bul { padding-left: 1.1rem; list-style: disc; display: flex; flex-direction: column; gap: .4rem; }
   .doc ul.bul li { color: var(--ink-2); font-size: .92rem; }
+  .doc p.nota { color: var(--muted); font-size: .86rem; border-left: 2px solid var(--line); padding-left: .8rem; }
 
   button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
@@ -418,40 +419,20 @@
 
       <section>
         <h2>Dar de alta un servicio</h2>
-        <p>Siempre una fila en <code>giwa.sla_servicios</code>. Según qué dispara el flujo, cambia lo que hay que agregarle:</p>
+        <p>Andá al tab <strong>Alta</strong>, acá arriba. Elegís el tipo y el formulario muestra solo los campos que ese tipo usa. Si el slug ya existe, lo actualiza y lo reactiva en vez de duplicarlo.</p>
+        <p>Cargá el <strong>Workflow ID</strong> aunque sea opcional: es lo que hace que el nombre en la lista linkee al flujo, y es la diferencia entre abrirlo de un clic o buscarlo a mano justo cuando algo se está cayendo.</p>
+
+        <p>Antes de darlo de alta, según qué dispara el flujo hay que agregarle:</p>
         <ul class="bul">
-          <li><strong>Con webhook propio</strong> — 2 nodos (Webhook <code>GET /x-health</code> + Respond), <strong>adentro del mismo workflow</strong>. En otro workflow respondería 200 aunque el agente esté muerto.</li>
-          <li><strong>Telegram o Meta</strong> — nada en el flujo, solo el token en la fila.</li>
-          <li><strong>Con schedule</strong> — 1 nodo Execute Sub-workflow (Latido) al final del camino feliz, así prueba que terminó y no solo que arrancó.</li>
-          <li><strong>Panel estático</strong> — nada.</li>
+          <li><strong>Con webhook propio</strong> (tipo <code>ping</code>) — 1 nodo Webhook suelto, <code>GET /&lt;cliente&gt;-health</code>, Respond <em>Immediately</em> y Response Data <code>{"ok":true}</code>, sin conectar a nada y <strong>adentro del mismo workflow</strong>. En otro workflow respondería 200 aunque el agente esté muerto.</li>
+          <li><strong>Telegram o Meta</strong> — nada en el flujo, solo el token en el formulario.</li>
+          <li><strong>Con schedule</strong> (tipo <code>latido</code>) — 1 nodo Execute Sub-workflow al final del camino feliz, así prueba que terminó y no solo que arrancó.</li>
+          <li><strong>Panel estático</strong> — nada, solo la URL.</li>
         </ul>
 
-        <div>
-          <div class="cap">ping · un endpoint que tiene que devolver 200</div>
-<pre><code>insert into giwa.sla_servicios (servicio, cliente, tipo, url)
-values ('mi-servicio', '&lt;cliente&gt;', 'ping', '&lt;url del health&gt;');</code></pre>
-        </div>
+        <p>Después de guardar aparece en la lista como <em>Unknown</em> y pasa a <em>Online</em> en el próximo tick, a los 5 minutos como mucho. Si queda en Unknown u Offline, la columna Detalle dice por qué.</p>
 
-        <div>
-          <div class="cap">telegram · chequea getWebhookInfo contra la API de Telegram</div>
-<pre><code>insert into giwa.sla_servicios (servicio, cliente, tipo, secreto)
-values ('mi-bot', '&lt;cliente&gt;', 'telegram', '&lt;bot token&gt;');</code></pre>
-        </div>
-
-        <div>
-          <div class="cap">meta · valida que el token viva y la app siga suscrita</div>
-<pre><code>insert into giwa.sla_servicios (servicio, cliente, tipo, url, secreto)
-values ('mi-whatsapp', '&lt;cliente&gt;', 'meta',
-        'https://graph.facebook.com/v23.0/&lt;WABA_ID&gt;/subscribed_apps',
-        '&lt;access token&gt;');</code></pre>
-        </div>
-
-        <div>
-          <div class="cap">latido · avisa si no hay señales en intervalo + tolerancia</div>
-<pre><code>insert into giwa.sla_servicios
-  (servicio, cliente, tipo, intervalo_min, tolerancia_min)
-values ('mi-schedule', '&lt;cliente&gt;', 'latido', 60, 20);</code></pre>
-        </div>
+        <p class="nota">Para cargar varios servicios de golpe conviene el SQL directo, no el formulario: los <code>insert</code> por tipo están en el repo privado del proyecto.</p>
       </section>
 
       <section>
