@@ -455,9 +455,9 @@ where servicio = 'mi-servicio';</code></pre>
     $("stats").innerHTML =
       tile(r.total || 0, "servicios", "") +
       tile(r.ok || 0, "Online", "is-ok") +
-      tile(r.falla || 0, "caídos", "is-down") +
-      tile(r.desconocido || 0, "sin datos", "is-unk") +
-      tile(r.pausados || 0, "pausados", "");
+      tile(r.falla || 0, "Offline", "is-down") +
+      tile(r.desconocido || 0, "Unknown", "is-unk") +
+      tile(r.pausados || 0, "Paused", "");
 
     var servicios = d.servicios || [];
     var tb = $("filas");
@@ -484,10 +484,10 @@ where servicio = 'mi-servicio';</code></pre>
     eventos.slice(0, 25).forEach(function (e) {
       var div = document.createElement("div");
       div.className = "ev";
-      var cls = e.estado === "OK" ? "ok" : (e.estado === "FALLA" ? "down" : "unk");
+      var et = etiqueta(e.estado);
       div.innerHTML =
         "<span class='cuando'>" + hora(e.creado_en) + "</span>" +
-        "<span class='pill " + cls + "'>" + esc(e.estado) + "</span>" +
+        "<span class='pill " + et.cls + "'>" + et.txt + "</span>" +
         "<span class='svc'>" + esc(e.servicio) + "</span>" +
         "<span class='qué'>" + esc(e.detalle || "") + "</span>";
       cont.appendChild(div);
@@ -498,11 +498,17 @@ where servicio = 'mi-servicio';</code></pre>
     return "<div class='stat " + cls + "'><span class='v num'>" + v + "</span><span class='k'>" + k + "</span></div>";
   }
 
+  // Unica fuente de las etiquetas de estado: la usan la tabla y el feed de eventos.
+  function etiqueta(estado) {
+    if (estado === "OK")    { return { txt: "Online",  cls: "ok" }; }
+    if (estado === "FALLA") { return { txt: "Offline", cls: "down" }; }
+    return { txt: "Unknown", cls: "unk" };
+  }
+
   function pill(s) {
-    if (s.activo === false) { return "<span class='pill off'>pausado</span>"; }
-    if (s.estado === "OK")    { return "<span class='pill ok'>Online</span>"; }
-    if (s.estado === "FALLA") { return "<span class='pill down'>caído</span>"; }
-    return "<span class='pill unk'>sin datos</span>";
+    if (s.activo === false) { return "<span class='pill off'>Paused</span>"; }
+    var e = etiqueta(s.estado);
+    return "<span class='pill " + e.cls + "'>" + e.txt + "</span>";
   }
 
   function hora(iso) {
