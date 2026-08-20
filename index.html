@@ -179,6 +179,38 @@
 
   .vacio { padding: 2.5rem 1.1rem; text-align: center; color: var(--muted); font-size: .9rem; }
 
+  /* formulario de alta */
+  .form { display: flex; flex-direction: column; gap: 1.1rem; padding: 1.2rem 1.1rem 1.4rem; }
+  .campo { display: flex; flex-direction: column; gap: .3rem; }
+  .campo .lab { font-size: .85rem; font-weight: 600; color: var(--ink); }
+  .campo .opt { font-weight: 400; color: var(--muted); font-size: .8rem; }
+  .campo input, .campo select {
+    font: inherit; font-size: .9rem; color: var(--ink);
+    background: var(--ground); border: 1px solid var(--line);
+    border-radius: 8px; padding: .5rem .65rem; width: 100%;
+  }
+  .campo input:focus, .campo select:focus {
+    outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent);
+  }
+  .campo input:invalid:not(:placeholder-shown) { border-color: var(--down); }
+  .campo .ayuda { font-size: .78rem; color: var(--muted); line-height: 1.45; }
+  .campo .ayuda code { font-size: .95em; }
+  .fila2 { display: grid; grid-template-columns: 1fr 1fr; gap: .9rem; }
+  [data-para] { display: none; }
+  [data-para].ver { display: flex; }
+  .fila2[data-para].ver { display: grid; }
+  .acciones { display: flex; align-items: center; gap: .9rem; flex-wrap: wrap; margin-top: .3rem; }
+  .btn {
+    font: inherit; font-size: .9rem; font-weight: 600; cursor: pointer;
+    color: #fff; background: var(--accent); border: 1px solid var(--accent);
+    border-radius: 8px; padding: .55rem 1.1rem;
+  }
+  .btn:hover { background: var(--accent-2); border-color: var(--accent-2); }
+  .btn[disabled] { opacity: .55; cursor: default; }
+  .msg { font-size: .86rem; padding: .4rem .7rem; border-radius: 7px; }
+  .msg.ok { background: var(--ok-bg); color: var(--ok); }
+  .msg.mal { background: var(--down-bg); color: var(--down); }
+
   /* eventos */
   .ev { display: flex; gap: .75rem; padding: .6rem 1.1rem; border-bottom: 1px solid var(--line-soft); align-items: baseline; font-size: .86rem; }
   .ev:last-child { border-bottom: none; }
@@ -255,6 +287,7 @@
 
     <div class="tabs" role="tablist">
       <button class="tab" id="tabEstado"  role="tab" aria-selected="true"  type="button">Estado</button>
+      <button class="tab" id="tabAlta"    role="tab" aria-selected="false" type="button">Alta</button>
       <button class="tab" id="tabRunbook" role="tab" aria-selected="false" type="button">Runbook</button>
     </div>
 
@@ -282,6 +315,79 @@
         <h2>Últimos cambios de estado</h2>
         <div id="eventos"></div>
         <div class="vacio" id="sinEventos" hidden>Sin cambios registrados.</div>
+      </div>
+    </div>
+
+    <!-- ---- vista alta ---- -->
+    <div id="vistaAlta" hidden>
+      <div class="panel" style="max-width:44rem">
+        <h2>Dar de alta un servicio</h2>
+        <form id="formAlta" class="form" autocomplete="off">
+
+          <label class="campo">
+            <span class="lab">Cliente</span>
+            <input name="cliente" type="text" required maxlength="80" placeholder="Acme">
+          </label>
+
+          <label class="campo">
+            <span class="lab">Slug del servicio</span>
+            <input name="servicio" type="text" required pattern="[a-z0-9][a-z0-9\-]{2,60}"
+                   placeholder="acme-agente-webhook">
+            <span class="ayuda">Minúsculas, números y guiones. Conviene <code>cliente-qué</code>.</span>
+          </label>
+
+          <label class="campo">
+            <span class="lab">Tipo</span>
+            <select name="tipo" id="altaTipo" required>
+              <option value="ping">ping — tiene webhook de health</option>
+              <option value="latido">latido — corre por schedule</option>
+              <option value="telegram">telegram — chequea el bot contra Telegram</option>
+              <option value="meta">meta — chequea el token de WhatsApp</option>
+            </select>
+          </label>
+
+          <label class="campo" data-para="ping meta">
+            <span class="lab">URL</span>
+            <input name="url" type="url" placeholder="https://giwa-ia.app.n8n.cloud/webhook/acme-health">
+            <span class="ayuda" data-ayuda="ping">El endpoint del canario. Tiene que devolver 200.</span>
+            <span class="ayuda" data-ayuda="meta">URL del Graph, ej. <code>https://graph.facebook.com/v23.0/&lt;WABA_ID&gt;/subscribed_apps</code></span>
+          </label>
+
+          <label class="campo" data-para="telegram meta">
+            <span class="lab">Token</span>
+            <input name="secreto" type="password" autocomplete="new-password" placeholder="••••••••">
+            <span class="ayuda">Queda guardado en la base y nunca vuelve al navegador.</span>
+          </label>
+
+          <div class="fila2" data-para="latido">
+            <label class="campo">
+              <span class="lab">Intervalo (min)</span>
+              <input name="intervalo_min" type="number" min="1" value="60">
+              <span class="ayuda">Cada cuánto debería correr.</span>
+            </label>
+            <label class="campo">
+              <span class="lab">Tolerancia (min)</span>
+              <input name="tolerancia_min" type="number" min="0" value="20">
+              <span class="ayuda">Gracia antes de alertar.</span>
+            </label>
+          </div>
+
+          <label class="campo">
+            <span class="lab">ID del workflow <span class="opt">opcional</span></span>
+            <input name="workflow_id" type="text" pattern="[A-Za-z0-9]{1,32}" placeholder="pGW6Dbv1Ght6KvbU">
+            <span class="ayuda">Sale de la URL en n8n, después de <code>/workflow/</code>. Es lo que hace que el nombre linkee al flujo.</span>
+          </label>
+
+          <label class="campo">
+            <span class="lab">Notas <span class="opt">opcional</span></span>
+            <input name="notas" type="text" maxlength="300" placeholder="Canario dentro del workflow del agente">
+          </label>
+
+          <div class="acciones">
+            <button class="btn" type="submit" id="btnAlta">Dar de alta</button>
+            <span id="altaMsg" class="msg" hidden></span>
+          </div>
+        </form>
       </div>
     </div>
 
@@ -375,6 +481,7 @@ where servicio = 'mi-servicio';</code></pre>
 
   var CONFIG = {
     API: "https://giwa-ia.app.n8n.cloud/webhook/centinela-api",
+    ALTA: "https://giwa-ia.app.n8n.cloud/webhook/uptime-alta",
     N8N: "https://giwa-ia.app.n8n.cloud",
     CLIENT_ID: "527644613244-0j1ob25124fcs5tfr5omm8f1tfptc2a1.apps.googleusercontent.com",
     DOMINIO: "giwa-ia.com",
@@ -546,17 +653,91 @@ where servicio = 'mi-servicio';</code></pre>
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 
+  // ---------- alta ----------
+  // Los campos se muestran segun el tipo: un ping no necesita token y un
+  // latido no necesita URL. Lo que no aplica no se manda.
+  function ajustarCampos() {
+    var tipo = $("altaTipo").value;
+    var bloques = document.querySelectorAll("#formAlta [data-para]");
+    for (var i = 0; i < bloques.length; i++) {
+      var aplica = bloques[i].getAttribute("data-para").split(" ").indexOf(tipo) >= 0;
+      bloques[i].classList.toggle("ver", aplica);
+      var inputs = bloques[i].querySelectorAll("input");
+      for (var j = 0; j < inputs.length; j++) { inputs[j].required = aplica; }
+    }
+    var ayudas = document.querySelectorAll("#formAlta [data-ayuda]");
+    for (var k = 0; k < ayudas.length; k++) {
+      ayudas[k].hidden = ayudas[k].getAttribute("data-ayuda") !== tipo;
+    }
+  }
+
+  function mostrarMsg(texto, bien) {
+    var m = $("altaMsg");
+    m.textContent = texto;
+    m.className = "msg " + (bien ? "ok" : "mal");
+    m.hidden = false;
+  }
+
+  function enviarAlta(ev) {
+    ev.preventDefault();
+    if (!token) { salir(); return; }
+
+    var f = $("formAlta");
+    if (!f.reportValidity()) { return; }
+
+    var datos = { token: token };
+    var campos = f.querySelectorAll("input, select");
+    for (var i = 0; i < campos.length; i++) {
+      var el = campos[i];
+      if (!el.name) { continue; }
+      var bloque = el.closest("[data-para]");
+      if (bloque && !bloque.classList.contains("ver")) { continue; }
+      datos[el.name] = el.value;
+    }
+
+    $("btnAlta").disabled = true;
+    mostrarMsg("Dando de alta...", true);
+
+    fetch(CONFIG.ALTA, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=UTF-8" },
+      body: JSON.stringify(datos)
+    })
+    .then(function (r) { return r.json().then(function (d) { return { status: r.status, data: d }; }); })
+    .then(function (res) {
+      $("btnAlta").disabled = false;
+      if (res.status === 401) { salir(); mostrarErrorLogin("Sesión vencida. Entrá de nuevo."); return; }
+      if (!res.data || res.data.ok !== true) {
+        mostrarMsg(res.data && res.data.motivo ? res.data.motivo : "No se pudo dar de alta.", false);
+        return;
+      }
+      mostrarMsg("✅ " + res.data.servicio + " dado de alta. Aparece en Estado en el próximo chequeo.", true);
+      f.reset();
+      ajustarCampos();
+      cargar(false);
+    })
+    .catch(function (err) {
+      $("btnAlta").disabled = false;
+      mostrarMsg("No se pudo contactar la API: " + err.message, false);
+    });
+  }
+
   // ---------- tabs ----------
   function verTab(cual) {
-    var esEstado = cual === "estado";
-    $("tabEstado").setAttribute("aria-selected", esEstado ? "true" : "false");
-    $("tabRunbook").setAttribute("aria-selected", esEstado ? "false" : "true");
-    $("vistaEstado").hidden = !esEstado;
-    $("vistaRunbook").hidden = esEstado;
+    var tabs = { estado: "tabEstado", alta: "tabAlta", runbook: "tabRunbook" };
+    var vistas = { estado: "vistaEstado", alta: "vistaAlta", runbook: "vistaRunbook" };
+    for (var k in tabs) {
+      $(tabs[k]).setAttribute("aria-selected", k === cual ? "true" : "false");
+      $(vistas[k]).hidden = k !== cual;
+    }
   }
 
   $("tabEstado").addEventListener("click", function () { verTab("estado"); });
+  $("tabAlta").addEventListener("click", function () { verTab("alta"); });
   $("tabRunbook").addEventListener("click", function () { verTab("runbook"); });
+  $("altaTipo").addEventListener("change", ajustarCampos);
+  $("formAlta").addEventListener("submit", enviarAlta);
+  ajustarCampos();
   $("btnRefrescar").addEventListener("click", function () { cargar(false); });
   $("btnSalir").addEventListener("click", salir);
 })();

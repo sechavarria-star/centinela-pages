@@ -24,7 +24,11 @@ No hay clave compartida. El `id_token` vive ~1h, se guarda solo en memoria (no `
 
 ## API
 
-Workflow n8n `GIWA - Uptime API` (`V9zTRv138RL7IYQX`), webhook `POST /webhook/centinela-api`.
+Dos endpoints, **separados a proposito**: si el alta rompe, el panel sigue mostrando el estado.
+
+### Lectura — `GIWA - Uptime API` (`V9zTRv138RL7IYQX`)
+
+Webhook `POST /webhook/centinela-api`.
 
 Se llama con `Content-Type: text/plain` a propósito: así es un *simple request* y no dispara preflight CORS.
 
@@ -33,6 +37,22 @@ POST { "token": "<id_token>" }
 200  { ok, usuario, resumen{total,ok,falla,desconocido,pausados}, servicios[], eventos[] }
 401  { ok: false, motivo }
 ```
+
+### Alta — `GIWA - Uptime Alta` (`TZmWz5ZuOhEWyasf`)
+
+Webhook `POST /webhook/uptime-alta`. Mismo esquema de auth. Valida los campos
+(slug, tipo, URL https, token segun tipo) y hace upsert con **query
+parametrizada** (`$1..$9`), no concatenando SQL.
+
+```
+POST { token, cliente, servicio, tipo, url?, secreto?, intervalo_min?, tolerancia_min?, workflow_id?, notas? }
+200  { ok: true, servicio, cliente, tipo }
+400  { ok: false, motivo }   <- campos invalidos
+401  { ok: false, motivo }   <- token vencido o de otro dominio
+```
+
+El front solo manda los campos que aplican al tipo elegido: un `ping` nunca
+manda token, un `latido` nunca manda URL.
 
 Lee de `giwa.sla_estado` y `giwa.sla_eventos`. **Nunca** devuelve `sla_servicios.secreto`, que es donde viven los tokens de bot.
 
