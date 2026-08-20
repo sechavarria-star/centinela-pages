@@ -149,6 +149,14 @@
   }
   tbody tr:last-child td { border-bottom: none; }
   td.svc { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .82rem; }
+  a.flujo {
+    color: var(--ink); text-decoration: none;
+    display: inline-flex; align-items: baseline; gap: .3rem;
+    border-bottom: 1px dotted var(--line); padding-bottom: 1px;
+  }
+  a.flujo:hover { color: var(--accent); border-bottom-color: var(--accent); }
+  a.flujo .ext { font-size: .78em; color: var(--muted); }
+  a.flujo:hover .ext { color: var(--accent); }
   td.det { color: var(--muted); font-size: .84rem; }
 
   .pill {
@@ -367,6 +375,7 @@ where servicio = 'mi-servicio';</code></pre>
 
   var CONFIG = {
     API: "https://giwa-ia.app.n8n.cloud/webhook/centinela-api",
+    N8N: "https://giwa-ia.app.n8n.cloud",
     CLIENT_ID: "527644613244-0j1ob25124fcs5tfr5omm8f1tfptc2a1.apps.googleusercontent.com",
     DOMINIO: "giwa-ia.com",
     REFRESCO_MS: 60000
@@ -469,7 +478,7 @@ where servicio = 'mi-servicio';</code></pre>
       tr.innerHTML =
         "<td>" + pill(s) + "</td>" +
         "<td>" + esc(s.cliente) + "</td>" +
-        "<td class='svc'>" + esc(s.servicio) + "</td>" +
+        "<td class='svc'>" + linkFlujo(s) + "</td>" +
         "<td><span class='tipo'>" + esc(s.tipo) + "</span></td>" +
         "<td class='det'>" + esc(s.ultimo_detalle || "—") + "</td>" +
         "<td class='det mono num' style='white-space:nowrap'>" + hora(s.ultimo_chequeo) + "</td>";
@@ -503,6 +512,17 @@ where servicio = 'mi-servicio';</code></pre>
     if (estado === "OK")    { return { txt: "Online",  cls: "ok" }; }
     if (estado === "FALLA") { return { txt: "Offline", cls: "down" }; }
     return { txt: "Unknown", cls: "unk" };
+  }
+
+  // El nombre del servicio linkea al workflow en n8n, para ir a validarlo.
+  // Los servicios sin workflow_id (paneles estaticos, endpoints de terceros)
+  // se muestran como texto plano.
+  function linkFlujo(s) {
+    var id = s.workflow_id;
+    if (!id) { return esc(s.servicio); }
+    return "<a class='flujo' target='_blank' rel='noopener noreferrer' title='Abrir el flujo en n8n'" +
+           " href='" + CONFIG.N8N + "/workflow/" + encodeURIComponent(id) + "'>" +
+           esc(s.servicio) + "<span class='ext' aria-hidden='true'>↗</span></a>";
   }
 
   function pill(s) {
